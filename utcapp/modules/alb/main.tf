@@ -87,7 +87,7 @@ resource "aws_lb_listener" "http_redirect" {
 # 7. Route 53 Alias Record pointing to the ALB
 resource "aws_route53_record" "alb_alias" {
   zone_id = data.aws_route53_zone.selected.zone_id
-  name    = var.subdomain != "" ? "${var.subdomain}.${var.domain_name}" : var.domain_name
+  name    = var.subdomain != "" ? "origin-${var.subdomain}.${var.domain_name}" : "origin.${var.domain_name}"
   type    = "A"
 
   alias {

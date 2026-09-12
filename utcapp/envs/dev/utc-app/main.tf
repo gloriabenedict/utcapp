@@ -32,7 +32,7 @@ module "cloudfront" {
   source       = "../../../modules/cloudfront"
   domain_name  = "linkwithme.info"
   subdomain    = "utcapp"
-  alb_dns_name = module.alb.alb_dns_name
+  alb_dns_name = module.alb.alb_fqdn
   environment  = "dev"
 
   # Pass the explicit us-east-1 provider alias to the module

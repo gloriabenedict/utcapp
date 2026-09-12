@@ -25,3 +25,7 @@ output "alb_arn_suffix" {
 output "target_group_arn_suffix" {
   value = aws_lb_target_group.app.arn_suffix
 }
+output "alb_fqdn" {
+  description = "Private-facing DNS name for the ALB; CloudFront's origin"
+  value       = aws_route53_record.alb_alias.fqdn
+}
