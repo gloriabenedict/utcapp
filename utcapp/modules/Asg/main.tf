@@ -47,49 +47,42 @@ resource "aws_launch_template" "app" {
   }
 
   # Example Bootstrap User Data script
-user_data = base64encode(<<-EOF
-  #!/bin/bash
-  set -euxo pipefail
+  user_data = base64encode(<<-EOF
+#!/bin/bash
+set -euxo pipefail
 
-  yum update -y
-  yum install -y amazon-efs-utils python3 jq
+yum update -y
+yum install -y amazon-efs-utils python3 jq
 
-  # --- EFS mount, with retry ---
-  mkdir -p /mnt/efs
-  echo "${var.efs_dns_name}:/ /mnt/efs efs _netdev,tls 0 0" >> /etc/fstab
+mkdir -p /mnt/efs
+echo "${var.efs_dns_name}:/ /mnt/efs efs _netdev,tls 0 0" >> /etc/fstab
 
-  for i in 1 2 3 4 5; do
-    mount -a -t efs && break
-    sleep 15
-  done
+for i in 1 2 3 4 5; do
+  mount -a -t efs && break
+  sleep 15
+done
 
-  # --- App content (local, not EFS) ---
-  mkdir -p /var/www
-  TOKEN=$$(curl -sX PUT http://169.254.169.254/latest/api/token \
-    -H "X-aws-ec2-metadata-token-ttl-seconds: 300")
-  IID=$$(curl -s -H "X-aws-ec2-metadata-token: $${TOKEN}" \
-    http://169.254.169.254/latest/meta-data/instance-id)
-  echo "Hello from 3-Tier App Server $${IID}" > /var/www/index.html
+mkdir -p /var/www
+echo "Hello from 3-Tier App Server $${HOSTNAME}" > /var/www/index.html
 
-  # --- Run under systemd so it restarts and survives reboot ---
-  cat > /etc/systemd/system/app.service <<'UNIT'
-  [Unit]
-  After=network-online.target remote-fs.target
+cat > /etc/systemd/system/app.service <<'UNIT'
+[Unit]
+After=network-online.target
 
-  [Service]
-  Environment=DB_SECRET_ARN=${var.db_secret_arn}
-  WorkingDirectory=/var/www
-  ExecStart=/usr/bin/python3 -m http.server 8080
-  Restart=always
+[Service]
+Environment=DB_SECRET_ARN=${var.db_secret_arn}
+WorkingDirectory=/var/www
+ExecStart=/usr/bin/python3 -m http.server 8080
+Restart=always
 
-  [Install]
-  WantedBy=multi-user.target
-  UNIT
+[Install]
+WantedBy=multi-user.target
+UNIT
 
-  systemctl daemon-reload
-  systemctl enable --now app.service
+systemctl daemon-reload
+systemctl enable --now app.service
 EOF
-)
+  )
   tag_specifications {
     resource_type = "instance"
 
@@ -131,7 +124,7 @@ resource "aws_autoscaling_group" "app" {
       min_healthy_percentage = 50
     }
 
-    triggers = ["tag"]
+    triggers = ["tag", "launch_template"]
   }
 
   lifecycle {
