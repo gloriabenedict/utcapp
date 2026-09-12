@@ -1,0 +1,5 @@
+environment = "dev"
+aws_region  = "us-east-1"
+domain_name = "example.com"
+subdomain   = "app"
+alert_email = "you@example.com"
